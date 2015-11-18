@@ -71,7 +71,7 @@ class HabiticaObject:
 class Task(HabiticaObject):
     """Simple class as a placeholder for tasks in Habitica.
 
-Set up so that getattr(Task, thing) is directly from task json, if the class member does not already exist."""
+    Set up so that getattr(Task, thing) is directly from task json, if the class member does not already exist."""
 
     def __init__(self, id_or_json, character):
         if type(id_or_json) == str:
@@ -87,7 +87,19 @@ Set up so that getattr(Task, thing) is directly from task json, if the class mem
         self.apikey = character.apikey
 
     def __getattr__(self, name):
-        return self._json[name]
+        try:
+            return self.__dict__["_json"][name]
+        except KeyError:
+            return self.__dict__[name]
+
+    def __setattr__(self, name, value):
+        try:
+            self._json[name] = value
+        except KeyError:
+            self.__dict__[name] = value
+
+    def __repr__(self):
+        return "Task('"+self.text+"')"
 
     # TODO repr and str methods
 
@@ -103,6 +115,34 @@ Set up so that getattr(Task, thing) is directly from task json, if the class mem
             self._json
             )
 
+    # def modify_habit(self, id, direction):
+    def _task_direction(self, direction):
+        assert direction == "up" or direction == "down",\
+            "direction must be \"up\" or \"down\""
+        
+        habit = self._post_or_except(
+            "/user/tasks/{}/{}".format(self.id, direction),
+            self._json
+            )
+
+        # Should probably return something useful here
+        return habit
+                            
+
+    # TODO think about better naming scheme
+    def up(self):
+        return self._task_direction("up")
+
+    def down(self):
+        return self._task_direction("down")
+
+    def complete(self):
+        return self.up()
+
+    def uncomplete(self):
+        return self.down()
+
+
 class Character(HabiticaObject):
     def __init__(self, uuid, apikey):
         self.uuid = uuid
@@ -117,41 +157,12 @@ class Character(HabiticaObject):
         self.name = self._user['profile']['name']
 
     # TODO change the name of this
-    def modify_habit(self, id, direction):
-        assert direction == "up" or direction == "down",\
-            "direction must be \"up\" or \"down\""
-        
-        task = self.get_task(id)
-        print task
-        habit = self._post_or_except(
-            "/user/tasks/{}/{}".format(id, direction),
-            task
-            )
-
-        # Should probably return something useful here
-        return habit
-                            
-
-    def positive_habit(self, id):
-        return self.modify_habit(id, "up")
-
-    def negative_habit(self, id):
-        return self.modify_habit(id, "down")
 
     def get_tasks(self):
-        return self._get_or_except("/user/tasks")
+        tasks_json = self._get_or_except("/user/tasks")
 
-    def _process_tasks(self, include_generator, use_cached=False):
-        """Gets tasks with a given generator
+        return [Task(x, self) for x in tasks_json]
 
-        TODO more documentation here.
-
-        """
-
-        if use_cached == False:
-            self._tasks = self.get_tasks()
-
-        return list(include_generator(self._tasks))
 
     # Task lister changes these generators into functions with a 'use_cached' keyword argument
     @task_lister
@@ -159,28 +170,24 @@ class Character(HabiticaObject):
         """Generator for current tasks."""
         for task in tasks:
             try:
-                if task['completed'] == False:
+                if task.completed == False:
                     yield task
             except KeyError:
-                if task['type'] == 'habit':
+                if task.type == 'habit':
                     yield task
                             
-    # TODO decide whether to use alternative below, or use decorator methods
-    # def get_current_habit(self, tasks):
-    #     return [task for task in tasks if task['type'] == 'habit']
-
     @task_lister
     def get_current_habits(self, tasks):
         """Generator for all habits on Habitica."""
         for task in tasks:
-            if task['type'] == 'habit':
+            if task.type == 'habit':
                 yield task
 
     @task_lister
     def get_current_rewards(self, tasks):
         """Generator for all custom rewards on Habitica."""
         for task in tasks:
-            if task['type'] == 'reward':
+            if task.type == 'reward':
                 yield task
 
     # TODO complete
@@ -206,24 +213,6 @@ class Character(HabiticaObject):
 
     def get_task(self, id):
         return Task(id, self)
-
-    def modify_task(self, id, to_modify):
-        task = self.get_task(id)
-
-        print task
-        for k in to_modify.keys():
-            print task
-            print k, task[k]
-            task[k] = to_modify[k]
-            
-        print task
-        return self._put_or_except(
-            "/user/tasks/{}".format(id),
-            task
-            )
-
-    def complete_task(self, id):
-        return self.modify_habit(id, "up")
 
     # def delete_task(self, id):
     #     pass
