@@ -1,52 +1,109 @@
 import requests
+import json
+
+# TODO come back to this idea
+def task_lister(gen):
+    def new_f(self, use_cached=False):
+        if use_cached == False:
+            self._tasks = self.get_tasks()
+
+        return list(gen(self, self._tasks))
+    return new_f
 
 habitica_api = "https://habitica.com/api/v2"
 
-class Character:
+def get_or_except(endpoint, uuid, apikey):
+    """Return json from request or raise an exception."""
+    print habitica_api+endpoint
+    r = requests.get(
+        habitica_api+endpoint,
+        headers={
+            'x-api-user':uuid,
+            'x-api-key':apikey
+        }
+    )
 
-    def _get_or_except(self, endpoint):
-        """Return json from request or raise an exception."""
-        print habitica_api+endpoint
-        r = requests.get(
-            habitica_api+endpoint,
-            headers={
-                'x-api-user':self.uuid,
-                'x-api-key':self.apikey
-            }
-        )
+    r.raise_for_status()
+    return r.json()
 
-        r.raise_for_status()
-        return r.json()
+class HabiticaObject:
+    """Abstract class for custom HTTP requests commands.
 
-    def _post_or_except(self, endpoint, params):
-        """Return json from request or raise an exception."""
-        r = requests.post(
-            habitica_api+endpoint,
-            headers={
-                'x-api-user':self.uuid,
-                'x-api-key':self.apikey
-            },
-            params=params
-        )
+    Anything inherting from this class must have:
+     - self.uuid
+     - self.apikey.
 
-        r.raise_for_status()
-        return r.json()
-
+    """
+    
     def _put_or_except(self, endpoint, data):
-        """Return json from request or raise an exception."""
+        """Return json from PUT request or raise an exception."""
         r = requests.put(
             habitica_api+endpoint,
             headers={
                 'x-api-user':self.uuid,
                 'x-api-key':self.apikey
             },
-            data=data
+            json=data
         )
 
-        print "Status for put is {}".format(r.status_code)
         r.raise_for_status()
         return r.json()
 
+    def _get_or_except(self, endpoint):
+        """Return json from GET request or raise an exception."""
+        return get_or_except(endpoint, self.uuid, self.apikey)
+
+    def _post_or_except(self, endpoint, data):
+        """Return json from POST request or raise an exception."""
+        r = requests.post(
+            habitica_api+endpoint,
+            headers={
+                'x-api-user':self.uuid,
+                'x-api-key':self.apikey
+            },
+            json=data
+        )
+
+        r.raise_for_status()
+        return r.json()
+    
+
+class Task(HabiticaObject):
+    """Simple class as a placeholder for tasks in Habitica.
+
+Set up so that getattr(Task, thing) is directly from task json, if the class member does not already exist."""
+
+    def __init__(self, id_or_json, character):
+        if type(id_or_json) == str:
+            self._json = get_or_except("/user/tasks/{}".format(id), character.uuid, character.apikey)
+        elif type(id_or_json) == dict:
+            # WARNING little checking is done that this is a valid task. Programmer beware!
+            self._json = id_or_json
+            assert self._json.has_key("id"), "No id found in dict, was a valid task json passed?"
+        else:
+            assert False, "id_or_json must be str or dict."
+            
+        self.uuid = character.uuid
+        self.apikey = character.apikey
+
+    def __getattr__(self, name):
+        return self._json[name]
+
+    # TODO repr and str methods
+
+    def pull(self):
+        """Update the task from the server, squashing any local changes."""
+        self._json = get_or_except("/user/tasks/{}".format(id), self.uuid, self.apikey)
+
+    def push(self):
+        """Push updates to the task (via the HTTP PUT method)."""
+            
+        return self._put_or_except(
+            "/user/tasks/{}".format(self.id),
+            self._json
+            )
+
+class Character(HabiticaObject):
     def __init__(self, uuid, apikey):
         self.uuid = uuid
         self.apikey = apikey
@@ -59,15 +116,17 @@ class Character:
 
         self.name = self._user['profile']['name']
 
+    # TODO change the name of this
     def modify_habit(self, id, direction):
         assert direction == "up" or direction == "down",\
             "direction must be \"up\" or \"down\""
         
+        task = self.get_task(id)
+        print task
         habit = self._post_or_except(
             "/user/tasks/{}/{}".format(id, direction),
-            params={'id': id,
-                    'direction': direction,
-            })
+            task
+            )
 
         # Should probably return something useful here
         return habit
@@ -92,16 +151,11 @@ class Character:
         if use_cached == False:
             self._tasks = self.get_tasks()
 
-        tasks_to_return = []
+        return list(include_generator(self._tasks))
 
-        for task in include_generator(self._tasks):
-            tasks_to_return.append(task)
-
-        return tasks_to_return
-
-    # It's pattern time
-    # TODO consider using **kwargs to pass along the arguments
-    def _current_tasks_generator(self, tasks):
+    # Task lister changes these generators into functions with a 'use_cached' keyword argument
+    @task_lister
+    def get_current_tasks(self, tasks):
         """Generator for current tasks."""
         for task in tasks:
             try:
@@ -110,20 +164,24 @@ class Character:
             except KeyError:
                 if task['type'] == 'habit':
                     yield task
-
-    def get_current_tasks(self, use_cached=False):
-        """Gets the list of tasks currently not completed (including inactive dailies)."""
-        return self._process_tasks(self._current_tasks_generator, use_cached)
                             
-    def _current_habits_generator(self, tasks):
+    # TODO decide whether to use alternative below, or use decorator methods
+    # def get_current_habit(self, tasks):
+    #     return [task for task in tasks if task['type'] == 'habit']
+
+    @task_lister
+    def get_current_habits(self, tasks):
         """Generator for all habits on Habitica."""
         for task in tasks:
             if task['type'] == 'habit':
                 yield task
 
-    def get_current_habits(self, use_cached=False):
-        return self._process_tasks(self._current_habits_generator, use_cached)
-
+    @task_lister
+    def get_current_rewards(self, tasks):
+        """Generator for all custom rewards on Habitica."""
+        for task in tasks:
+            if task['type'] == 'reward':
+                yield task
 
     # TODO complete
     # def create_habit(self, **kwargs):
@@ -147,21 +205,25 @@ class Character:
     
 
     def get_task(self, id):
-        return self._get_or_except("/user/tasks/{}".format(id))
+        return Task(id, self)
 
     def modify_task(self, id, to_modify):
         task = self.get_task(id)
 
+        print task
         for k in to_modify.keys():
+            print task
+            print k, task[k]
             task[k] = to_modify[k]
             
+        print task
         return self._put_or_except(
             "/user/tasks/{}".format(id),
             task
             )
 
-
-
+    def complete_task(self, id):
+        return self.modify_habit(id, "up")
 
     # def delete_task(self, id):
     #     pass
