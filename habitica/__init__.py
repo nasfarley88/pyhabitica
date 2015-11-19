@@ -12,20 +12,6 @@ def task_lister(gen):
 
 habitica_api = "https://habitica.com/api/v2"
 
-def get_or_except(endpoint, uuid, apikey):
-    """Return json from request or raise an exception."""
-    print habitica_api+endpoint
-    r = requests.get(
-        habitica_api+endpoint,
-        headers={
-            'x-api-user':uuid,
-            'x-api-key':apikey
-        }
-    )
-
-    r.raise_for_status()
-    return r.json()
-
 class HabiticaObject:
     """Abstract class for custom HTTP requests commands.
 
@@ -51,7 +37,17 @@ class HabiticaObject:
 
     def _get_or_except(self, endpoint):
         """Return json from GET request or raise an exception."""
-        return get_or_except(endpoint, self.uuid, self.apikey)
+        print habitica_api+endpoint
+        r = requests.get(
+            habitica_api+endpoint,
+            headers={
+                'x-api-user':uuid,
+                'x-api-key':apikey
+            }
+        )
+
+        r.raise_for_status()
+        return r.json()
 
     def _post_or_except(self, endpoint, data):
         """Return json from POST request or raise an exception."""
