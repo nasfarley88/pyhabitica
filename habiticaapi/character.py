@@ -1,6 +1,7 @@
 from habitica_object import HabiticaObject
 from task import Task
 
+# TODO consider having all HabiticaObjects do the _json and __getattr__ and __setattr__ thing
 class Character(HabiticaObject):
     def __init__(self, uuid, apikey):
         HabiticaObject.__init__(self)
@@ -11,10 +12,7 @@ class Character(HabiticaObject):
         # 
         # This leads to duplication, but keeping them separate is easier at this stage in development.
         self._tasks = []
-        self._user = self._get_or_except("/user")
-
-        self.name = self._user['profile']['name']
-
+        self._json = self._get_or_except("/user")
 
     def _pull_tasks(self):
         """Pull all tasks from the Habitica server to the character."""
@@ -110,10 +108,9 @@ class Character(HabiticaObject):
     
 
     def get_task(self, id):
+        # When a Task recieves only an ID, it fetches the task from online.
         return Task(id, self)
 
-    # def delete_task(self, id):
-    #     pass
 
     # sort tasks?
 
@@ -121,9 +118,9 @@ class Character(HabiticaObject):
 
     # unlink
 
-    # def get_purchasable_equipment(self):
-    #     """Returns a list of equipment available to buy."""
-    #     pass
+    def get_purchasable_equipment(self):
+        """Returns a list of equipment available to buy."""
+        pass
 
     # # Consider merging equipment and other item types in api
     # def buy_equipment(self, key):

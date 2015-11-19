@@ -10,7 +10,11 @@ class HabiticaObject:
     """
 
     def __init__(self):
+        # _json must be created with __dict__ to avoid referencing itself in __setattr__
+        self.__dict__["_json"] = {}
+
         self.habitica_api = "https://habitica.com/api/v2"
+
 
     def _put_or_except(self, endpoint, data):
         """Return json from PUT request or raise an exception."""
@@ -53,3 +57,28 @@ class HabiticaObject:
 
         r.raise_for_status()
         return r.json()
+
+    def _delete_or_except(self, endpoint):
+        """Return json from POST request or raise an exception."""
+        r = requests.delete(
+            self.habitica_api+endpoint,
+            headers={
+                'x-api-user':self.uuid,
+                'x-api-key':self.apikey
+            }
+        )
+
+        r.raise_for_status()
+        return r.json()
+
+    def __getattr__(self, name):
+        try:
+            return self.__dict__["_json"][name]
+        except KeyError:
+            return self.__dict__[name]
+
+    def __setattr__(self, name, value):
+        if self._json.has_key(name):
+            self._json[name] = value
+        else:
+            self.__dict__[name] = value

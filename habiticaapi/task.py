@@ -32,18 +32,6 @@ class Task(HabiticaObject):
         self.uuid = character.uuid
         self.apikey = character.apikey
 
-    def __getattr__(self, name):
-        try:
-            return self.__dict__["_json"][name]
-        except KeyError:
-            return self.__dict__[name]
-
-    def __setattr__(self, name, value):
-        try:
-            self._json[name] = value
-        except KeyError:
-            self.__dict__[name] = value
-
     def __repr__(self):
         return "Task('"+self.text+"')"
 
@@ -51,7 +39,7 @@ class Task(HabiticaObject):
 
     def pull(self):
         """Update the task from the server, squashing any local changes."""
-        self._json = get_or_except("/user/tasks/{}".format(id), self.uuid, self.apikey)
+        self._json = self._get_or_except("/user/tasks/{}".format(self.id))
 
     def push(self):
         """Push updates to the task (via the HTTP PUT method)."""
@@ -97,3 +85,6 @@ class Task(HabiticaObject):
 
     def uncomplete(self):
         return self.down()
+
+    def delete(self):
+        return self._delete_or_except("/user/tasks/{}".format(self.id))
