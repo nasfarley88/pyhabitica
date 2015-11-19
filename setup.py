@@ -1,5 +1,5 @@
 from distutils.core import setup
-setup(name='habitica',
+setup(name='pyhabitica',
       version='0.1',
-      packages=['habitica'],
+      packages=['habiticaapi'],
       )
