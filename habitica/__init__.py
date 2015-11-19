@@ -1,14 +1,4 @@
 import requests
-import json
-
-# TODO come back to this idea
-def task_lister(gen):
-    def new_f(self, use_cached=False):
-        if use_cached == False:
-            self._tasks = self.get_tasks()
-
-        return list(gen(self, self._tasks))
-    return new_f
 
 habitica_api = "https://habitica.com/api/v2"
 
@@ -41,8 +31,8 @@ class HabiticaObject:
         r = requests.get(
             habitica_api+endpoint,
             headers={
-                'x-api-user':uuid,
-                'x-api-key':apikey
+                'x-api-user':self.uuid,
+                'x-api-key':self.apikey
             }
         )
 
@@ -113,16 +103,26 @@ class Task(HabiticaObject):
 
     # def modify_habit(self, id, direction):
     def _task_direction(self, direction):
+        """Move the task in a "direction" (allowed values: "up" and "down").
+
+        The internal Habitica API inteprets "up" and "down"
+        differently for different types of tasks. Habits are obvious
+        ("up" is positive, "down" is negative). Dailies and Todos are
+        complete and not completed by "up" and "down".
+
+        TODO figure out what happens to rewards.
+
+        """
         assert direction == "up" or direction == "down",\
             "direction must be \"up\" or \"down\""
         
-        habit = self._post_or_except(
+        # Returns information on XP gained, items etc.
+        result = self._post_or_except(
             "/user/tasks/{}/{}".format(self.id, direction),
             self._json
             )
 
-        # Should probably return something useful here
-        return habit
+        return result
                             
 
     # TODO think about better naming scheme
@@ -152,17 +152,66 @@ class Character(HabiticaObject):
 
         self.name = self._user['profile']['name']
 
-    # TODO change the name of this
 
-    def get_tasks(self):
-        tasks_json = self._get_or_except("/user/tasks")
+    def _pull_tasks(self):
+        """Pull all tasks from the Habitica server to the character."""
+        self._tasks = self._get_or_except("/user/tasks")
 
-        return [Task(x, self) for x in tasks_json]
+    def get_all_tasks(self, from_iterable=None, use_cached=False):
+        """Get all tasks or all tasks from from_iterable."""
 
+        if use_cached == False:
+            self._pull_tasks()
 
-    # Task lister changes these generators into functions with a 'use_cached' keyword argument
-    @task_lister
-    def get_current_tasks(self, tasks):
+        if from_iterable == None:
+            return [Task(x, self) for x in self._tasks]
+        elif callable(from_iterable):
+            return [x for x in from_iterable([Task(x, self) for x in self._tasks])]
+
+    def get_specific_tasks(self, tasks_iterable=None, use_cached=False, **kwargs):
+        """Get tasks matching certain critera with keyword__contains.
+        
+        Get all tasks matching criteria given in kwargs. If no extra
+        kwargs are given, return nothing. (If you want to return
+        everything, use get_all_tasks())
+
+        For example:
+        >>> character.get_specific_tasks(text__contains="feats of daring do")
+        [Task('Achieve feats of daring do'),
+         Task('Watch feats of daring do on YouTube')]
+        >>> character.get_specific_tasks(id__contains="asdfsd-asd-fasdg-asfdfasdgh-a-sdf")
+        [Task('Understand how to be productive')]
+
+        """
+
+        if use_cached == False:
+            self._pull_tasks()
+
+        # If no generator is supplied, use all tasks
+        if tasks_iterable == None:
+            tasks = self.get_all_tasks(use_cached=True)
+        elif callable(tasks_iterable):
+            tasks = tasks_iterable(self.get_all_tasks(use_cached=True))
+        else:
+            assert False, "tasks_iterable must be None or a callable."
+            
+        return_list = []
+
+        # TODO use regex to catch the _tmp_key and make sure
+        # keyword__contains matches .*__contains$ (and implement __re
+        # methods)
+        for task in tasks:
+            for k, v in kwargs.items():
+                if "__contains" in k:
+                    _tmp_key = k.replace("__contains", "")
+                    if v in getattr(task, _tmp_key):
+                        return_list.append(task)
+                elif "__re" in k:
+                    assert False, "Sorry, not implemented yet!"
+
+        return return_list
+
+    def _current_tasks_generator(self, tasks):
         """Generator for current tasks."""
         for task in tasks:
             try:
@@ -171,21 +220,11 @@ class Character(HabiticaObject):
             except KeyError:
                 if task.type == 'habit':
                     yield task
+
+    def get_current_tasks(self):
+        """Get all currently running tasks (not including rewards)."""
+        return self.get_all_tasks(self._current_tasks_generator)
                             
-    @task_lister
-    def get_current_habits(self, tasks):
-        """Generator for all habits on Habitica."""
-        for task in tasks:
-            if task.type == 'habit':
-                yield task
-
-    @task_lister
-    def get_current_rewards(self, tasks):
-        """Generator for all custom rewards on Habitica."""
-        for task in tasks:
-            if task.type == 'reward':
-                yield task
-
     # TODO complete
     # def create_habit(self, **kwargs):
     #     template_task = {
