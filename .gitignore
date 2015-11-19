@@ -1,3 +1,6 @@
+# Ignore temporary files
+*~
+
 # Ignore my config file
 config.py
 
