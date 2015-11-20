@@ -1,4 +1,5 @@
 from habitica_object import HabiticaObject
+import attrdict
 
 def _create_task_on_server(uuid, apikey):
     """Create a task on the Habitica server and return a Task()."""
@@ -17,20 +18,28 @@ class Task(HabiticaObject):
     """
 
     def __init__(self, id_or_json, character):
-        HabiticaObject.__init__(self)
-
         # TODO consider what happens when a task needs to be created
+
+        # TODO consider moving all the AttrMap to HabiticaObject with
+        # a condition in __getattr__ (might cause problems for
+        # __setattr__ though
         if type(id_or_json) == str:
-            self._json = get_or_except("/user/tasks/{}".format(id), character.uuid, character.apikey)
-        elif type(id_or_json) == dict:
-            # WARNING little checking is done that this is a valid task. Programmer beware!
-            self._json = id_or_json
-            assert self._json.has_key("id"), "No id found in dict, was a valid task json passed?"
+            super(Task, self).__init__(
+                character.uuid,
+                character.apikey,
+                endpoint="/user/tasks/{}".format(id_or_json))
+            # self._json = get_or_except("/user/tasks/{}".format(id), character.uuid, character.apikey)
         else:
-            assert False, "id_or_json must be str or dict."
+            # TODO revise this logic, it's not as clear as I'd like
+            try:
+                _tmp_json = dict(id_or_json)
+                super(Task, self).__init__(
+                    character.uuid,
+                    character.apikey,
+                    json=_tmp_json)
+            except ValueError as e:
+                assert False, "id_or_json must be str or dict-like object."
             
-        self.uuid = character.uuid
-        self.apikey = character.apikey
 
     def __repr__(self):
         return "Task('"+self.text+"')"

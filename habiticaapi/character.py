@@ -1,22 +1,26 @@
 from habitica_object import HabiticaObject
 from task import Task
+import attrdict
 
 # TODO consider having all HabiticaObjects do the _json and __getattr__ and __setattr__ thing
 class Character(HabiticaObject):
     def __init__(self, uuid, apikey):
-        HabiticaObject.__init__(self)
-        self.uuid = uuid
-        self.apikey = apikey
+        super(Character, self).__init__(uuid, apikey)
 
         # Cache for tasks and user info
         # 
         # This leads to duplication, but keeping them separate is easier at this stage in development.
-        self._tasks = []
-        self._json = self._get_or_except("/user")
+        self.__dict__["_tasks"] = []
+        self._json = attrdict.AttrMap(self._get_or_except("/user"))
+
+    # overriding __setattr__ to prevent users modifying values without functions
+    # def __setattr__(self, name, value):
+    #     assert False, "__setattr__ has been disabled for the Character class. If you *really* need to edit a member variable, use self.__dict__[name] = value."
+        
 
     def _pull_tasks(self):
         """Pull all tasks from the Habitica server to the character."""
-        self._tasks = self._get_or_except("/user/tasks")
+        self.__dict__["_tasks"] = self._get_or_except("/user/tasks")
 
     def get_all_tasks(self, from_iterable=None, use_cached=False):
         """Get all tasks or all tasks from from_iterable."""
@@ -78,7 +82,7 @@ class Character(HabiticaObject):
             try:
                 if task.completed == False:
                     yield task
-            except KeyError:
+            except AttributeError:
                 if task.type == 'habit':
                     yield task
 
