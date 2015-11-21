@@ -73,3 +73,12 @@ class TestCharacter(unittest2.TestCase):
     def test_get_items_can_buy(self):
         items = self.character.get_items_can_buy()
         # Not sure what i can test here, assignment should be enough.
+
+    # TODO figure out how to test this safely
+    # def test_buy_equipment(self):
+    #     assert False,\
+    #         "Not sure how to test this one yet, can't create items." 
+
+    # TODO figure out how to test selling item
+
+    # TODO figure out how to test buying items with gems

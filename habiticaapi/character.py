@@ -127,51 +127,77 @@ class Character(HabiticaObject):
         """Returns a list of items available to buy."""
         return [InventoryItem(i) for i in self._get_or_except("/user/inventory/buy")]
 
-    # # Consider merging equipment and other item types in api
-    # def buy_equipment(self, key):
-    #     pass
+    # Consider merging equipment and other item types in api
+    def buy_equipment(self, item):
+        return self._post_or_except(
+            "/user/inventory/buy/{}".format(item.key))
 
-    # def sell_item(self, type, key):
-    #     pass
+    def sell_item(self, item_type, key):
+        return self._post_or_except(
+            "/user/inventory/sell/{}/{}".format(item_type, key))
 
-    # def buy_item_with_gems(self, type, key):
-    #     pass
+    def buy_item_with_gems(self, item_type, key):
+        return self._post_or_except(
+            "/user/inventory/purchase/{}/{}".format(
+                item_type, key))
 
-    # def buy_item_with_hourglass(self, type, key):
-    #     pass
+    def buy_creature_with_hourglass(self, creature_type, key):
+        return self._post_or_except(
+            "/user/inventory/hourglass/{}/{}".format(
+                creature_type, key))
 
-    # def feed_pet(self, pet, food):
-    #     pass
+    def buy_item_with_mystery(self, type, key):
+        return self._post_or_except(
+            "/user/inventory/mystery/{}/{}".format(
+                item.type, item.key))
+
+    def feed_pet(self, pet, food):
+        return self._post_or_except(
+            "/user/inventory/feed/{}/{}".format(
+                pet, food))
 
     # def feed_pet_best(self, pet):
     #     pass
 
-    # def equip(self, type, equipment):
-    #     pass
+    def equip(self, item_type, key):
+        return self._post_or_except(
+            "/user/inventory/equip/{}/{}".format(
+                item_type, key))
 
-    # def hatch(self, egg, hatching_potion):
-    #     pass
+    def hatch(self, egg, hatching_potion):
+        return self._post_or_except(
+            "/user/inventory/hatch/{}/{}".format(
+                egg, hatching_potion))
 
-    # def revive(self):
-    #     pass
+    def revive(self):
+        return self._post_or_except("/user/revive")
 
-    # def drink_fortify_potion(self):
-    #     pass
+    def drink_fortify_potion(self):
+        return self._post_or_except("/user/reroll")
 
     # # Reset account
 
     # # TODO make an explicit check_into_inn and check_out_of_inn methods
-    # def toggle_sleep(self):
-    #     pass
+    def toggle_sleep(self):
+        return self._post_or_except("/user/sleep")
 
-    # def class_change(self, cls):
-    #     pass
+    def class_change(self, cls):
+        return self._post_or_except("/user/class/change",
+                                    query={'class':cls})
 
-    # def allocate_point(self, stat):
-    #     pass
+    def allocate_point(self, stat):
+        return self._post_or_except("/user/class/allocate",
+                                    query={'stat': stat})
 
-    # def cast(self, spell, target_type, target_id=None):
-    #     pass
+    def cast(self, spell, target_type, target_id=None):
+        query_dict['targetType'] = target_type
+        if target_id:
+            query_dict['targetId'] = target_id
+
+        return self._post_or_except(
+            "/user/class/cast/{}".format(spell),
+            query=query_dict)
+
 
     # # TODO investigate how this function works (does it really allow you to cheat the system?)
     # def unlock(self, path):

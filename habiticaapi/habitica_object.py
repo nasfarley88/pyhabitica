@@ -57,7 +57,7 @@ class HabiticaObject(object):
         r.raise_for_status()
         return attrdict_or_list(r.json())
 
-    def _post_or_except(self, endpoint, data):
+    def _post_or_except(self, endpoint, json={}, query={}):
         """Return json from POST request or raise an exception."""
         r = requests.post(
             self.habitica_api+endpoint,
@@ -66,6 +66,7 @@ class HabiticaObject(object):
                 'x-api-key':self.apikey
             },
             json=dict(data)
+            params=query
         )
 
         r.raise_for_status()
