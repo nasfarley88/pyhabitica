@@ -65,7 +65,7 @@ class HabiticaObject(object):
                 'x-api-user':self.uuid,
                 'x-api-key':self.apikey
             },
-            json=dict(data)
+            json=dict(data),
             params=query
         )
 
