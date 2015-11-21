@@ -1,5 +1,6 @@
 from habitica_object import HabiticaObject
 from task import Task
+from item import InventoryItem
 import attrdict
 
 # TODO consider having all HabiticaObjects do the _json and __getattr__ and __setattr__ thing
@@ -122,9 +123,9 @@ class Character(HabiticaObject):
 
     # unlink
 
-    def get_purchasable_equipment(self):
-        """Returns a list of equipment available to buy."""
-        pass
+    def get_items_can_buy(self):
+        """Returns a list of items available to buy."""
+        return [InventoryItem(i) for i in self._get_or_except("/user/inventory/buy")]
 
     # # Consider merging equipment and other item types in api
     # def buy_equipment(self, key):

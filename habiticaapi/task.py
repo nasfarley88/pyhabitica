@@ -23,7 +23,7 @@ class Task(HabiticaObject):
         # TODO consider moving all the AttrMap to HabiticaObject with
         # a condition in __getattr__ (might cause problems for
         # __setattr__ though
-        if type(id_or_json) == str:
+        if type(id_or_json) == str or type(id_or_json) == unicode:
             super(Task, self).__init__(
                 character.uuid,
                 character.apikey,
@@ -38,7 +38,7 @@ class Task(HabiticaObject):
                     character.apikey,
                     json=_tmp_json)
             except ValueError as e:
-                assert False, "id_or_json must be str or dict-like object."
+                assert False, "id_or_json must be str, unicode or dict-like object."
             
 
     def __repr__(self):
@@ -88,12 +88,6 @@ class Task(HabiticaObject):
 
     def down(self):
         return self._task_direction("down")
-
-    def complete(self):
-        return self.up()
-
-    def uncomplete(self):
-        return self.down()
 
     def delete(self):
         return self._delete_or_except("/user/tasks/{}".format(self.id))

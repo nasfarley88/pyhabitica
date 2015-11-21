@@ -11,13 +11,7 @@ def attrdict_or_list(thing):
         assert False, "DON'T PANIC. Something that wasn't a list or dict."
 
 class HabiticaObject(object):
-    """Abstract class for custom HTTP requests commands for Habitica.
-
-    Anything inherting from this class must have:
-     - self.uuid
-     - self.apikey.
-
-    """
+    """Abstract class for custom HTTP requests commands for Habitica. """
 
     def __init__(self, uuid, apikey, json=None, endpoint=None):
         # _json must be created with __dict__ to avoid referencing itself in __setattr__
@@ -25,6 +19,7 @@ class HabiticaObject(object):
 
         self.__dict__["uuid"] = uuid
         self.__dict__["apikey"] = apikey
+        self.__dict__["habitica_api"] = "https://habitica.com/api/v2"
 
         if json:
             self.__dict__["_json"] = attrdict.AttrMap(json)
@@ -33,7 +28,6 @@ class HabiticaObject(object):
         else:
             self.__dict__["_json"] = attrdict.AttrMap()
 
-        self.habitica_api = "https://habitica.com/api/v2"
 
 
     def _put_or_except(self, endpoint, data):
@@ -52,7 +46,6 @@ class HabiticaObject(object):
 
     def _get_or_except(self, endpoint):
         """Return json from GET request or raise an exception."""
-        print self.habitica_api+endpoint
         r = requests.get(
             self.habitica_api+endpoint,
             headers={
