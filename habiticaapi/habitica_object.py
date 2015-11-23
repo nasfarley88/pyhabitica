@@ -29,7 +29,13 @@ class HabiticaObject(object):
             self.__dict__["_json"] = attrdict.AttrMap()
 
 
+    def __getstate__(self):
+        return self.__dict__.copy()
 
+    def __setstate__(self, dictionary):
+        self.__dict__["_json"] = dictionary["_json"]
+        self.__dict__ = dictionary
+            
     def _put_or_except(self, endpoint, data):
         """Return json from PUT request or raise an exception."""
         r = requests.put(
@@ -65,7 +71,7 @@ class HabiticaObject(object):
                 'x-api-user':self.uuid,
                 'x-api-key':self.apikey
             },
-            json=dict(data),
+            json=dict(json),
             params=query
         )
 
@@ -92,7 +98,7 @@ class HabiticaObject(object):
             return self.__dict__[name]
 
     def __setattr__(self, name, value):
-        if name in self._json.keys():
+        if name in self.__dict__["_json"].keys():
             # TODO ensure that the same types are put into place
             # (Maybe consider on the fly checking for different types)
             assert type(self.__dict__["_json"]) == type(value),\

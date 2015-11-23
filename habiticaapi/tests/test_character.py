@@ -16,6 +16,20 @@ class TestCharacter(unittest2.TestCase):
     def tearDown(self):
         """Tear down character."""
 
+
+    def test_pickling_character_return_None(self):
+        import pickle
+        import os
+        pickle_filename = "test_char_pickle.p"
+        if os.path.exists(pickle_filename):
+            os.remove(pickle_filename)
+        pickle.dump(self.character, open(pickle_filename, "wb"))
+        unpickled_character = pickle.load(open(pickle_filename, "rb"))
+        os.remove(pickle_filename)
+
+        assert self.character._json == unpickled_character._json
+
+        
     def test_assert_character_exists_return_None(self):
         assert self.character
 
