@@ -19,6 +19,52 @@ class Character(HabiticaObject):
     #     assert False, "__setattr__ has been disabled for the Character class. If you *really* need to edit a member variable, use self.__dict__[name] = value."
         
 
+    def push(self):
+        """WARNING: not yet tested properly!
+
+        Pushes the current json to the Habitica server."""
+
+        to_remove = [
+            "_id",
+            "__v",
+            "migration",
+            "pushDevices",
+            "rewards",
+            "todos",
+            "dailys",
+            "habits",
+            "inbox",
+            "challenges",
+            "tags",
+            "stats",
+            "profile",
+            "preferences",
+            "party",
+            "newMessages",
+            "items",
+            "invitations",
+            "history",
+            "flags",
+            "purchased",
+            "balance",
+            "contributor",
+            "backer",
+            "auth",
+            "achievements",
+            "_v",
+            "id",
+            ]
+
+        to_submit = self._json
+
+        for key in to_remove:
+            to_submit.pop(key)
+
+        return self._put_or_except(
+            "/user",
+            to_submit,
+            )
+
     def _pull_tasks(self):
         """Pull all tasks from the Habitica server to the character."""
         self.__dict__["_tasks"] = self._get_or_except("/user/tasks")

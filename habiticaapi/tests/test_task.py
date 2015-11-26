@@ -4,6 +4,7 @@ import config
 import habiticaapi
 import unittest2
 import logger
+import copy
 
 class TestTask(unittest2.TestCase):
     def setUp(self):
@@ -18,8 +19,12 @@ class TestTask(unittest2.TestCase):
             type__contains = "habit"
             )[0]
 
+        # This *must* be an independent copy
+        self.character_to_restore = copy.deepcopy(self.character)
+
     def tearDown(self):
         """Tear down character."""
+        self.character_to_restore.push()
 
     def test_task___init___return_None(self):
         assert self.task

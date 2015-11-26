@@ -4,6 +4,7 @@ import config
 import habiticaapi
 import unittest2
 import logger
+import copy
 
 class TestCharacter(unittest2.TestCase):
     def setUp(self):
@@ -13,9 +14,16 @@ class TestCharacter(unittest2.TestCase):
             config.APIKEY
         )
 
+        # This *must* be an independent copy
+        self.character_to_restore = copy.deepcopy(self.character)
+
     def tearDown(self):
         """Tear down character."""
+        print self.character_to_restore
+        self.character_to_restore.push()
 
+    def test_push_character_return_None(self):
+        self.character.push()
 
     def test_pickling_character_return_None(self):
         import pickle

@@ -39,18 +39,31 @@ class HabiticaObject(object):
         super(HabiticaObject, self).__setattr__("__dict__", d)
 
             
-    def _put_or_except(self, endpoint, data):
+    def _put_or_except(self, endpoint, json=None):
         """Return json from PUT request or raise an exception."""
-        r = requests.put(
-            self.habitica_api+endpoint,
-            headers={
-                'x-api-user':self.uuid,
-                'x-api-key':self.apikey
-            },
-            json=dict(data)
-        )
+        if json:
+            r = requests.put(
+                self.habitica_api+endpoint,
+                headers={
+                    'x-api-user':self.uuid,
+                    'x-api-key':self.apikey
+                },
+                json=dict(json)
+            )
+        else:
+            r = requests.put(
+                self.habitica_api+endpoint,
+                headers={
+                    'x-api-user':self.uuid,
+                    'x-api-key':self.apikey
+                },
+            )
 
-        r.raise_for_status()
+        try:
+            r.raise_for_status()
+        except Exception as e:
+            print r
+            raise(e)
         return attrdict_or_list(r.json())
 
     def _get_or_except(self, endpoint):
