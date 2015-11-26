@@ -10,6 +10,7 @@ def attrdict_or_list(thing):
     else:
         assert False, "DON'T PANIC. Something that wasn't a list or dict."
 
+
 class HabiticaObject(object):
     """Abstract class for custom HTTP requests commands for Habitica. """
 
@@ -30,11 +31,13 @@ class HabiticaObject(object):
 
 
     def __getstate__(self):
-        return self.__dict__.copy()
+        return self.__dict__
 
-    def __setstate__(self, dictionary):
-        self.__dict__["_json"] = dictionary["_json"]
-        self.__dict__ = dictionary
+    def __setstate__(self, d):
+        # Use the ordinary, plain, boring, normal setattr so that
+        # pickle doesn't freak out.
+        super(HabiticaObject, self).__setattr__("__dict__", d)
+
             
     def _put_or_except(self, endpoint, data):
         """Return json from PUT request or raise an exception."""
@@ -91,11 +94,21 @@ class HabiticaObject(object):
         r.raise_for_status()
         return attrdict_or_list(r.json())
 
+    # This is a problem. Trying to yaml or pickle stuff, this getattr
+    # gets in the way and causes the emmitter to simply take
+    # self._json.thing and call it self.thing. Which is what I want
+    # the programmer to see. But not what I want the emmitter to see
+    # (since it's hella confusing __getattr__(self, name):
     def __getattr__(self, name):
+        # If other methods fail, try
         try:
             return getattr(self.__dict__["_json"], name)
         except KeyError:
-            return self.__dict__[name]
+            # Sometimes _json doesn't exist yet, so create it and
+            # recall the function
+            self.__dict__["_json"] = attrdict.AttrMap()
+            return getattr(self, name)
+            
 
     def __setattr__(self, name, value):
         if name in self.__dict__["_json"].keys():

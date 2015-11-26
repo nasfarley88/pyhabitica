@@ -28,6 +28,24 @@ class TestCharacter(unittest2.TestCase):
         os.remove(pickle_filename)
 
         assert self.character._json == unpickled_character._json
+        assert self.character.__dict__ == unpickled_character.__dict__
+
+    def test_yaml_character_return_None(self):
+        import yaml
+        import os
+        yaml_filename = "test_char.yaml"
+        if os.path.exists(yaml_filename):
+            os.remove(yaml_filename)
+        yaml.dump(self.character, open(yaml_filename, "wb"))
+        unyamld_character = yaml.load(open(yaml_filename, "rb"))
+        os.remove(yaml_filename)
+
+        assert self.character._json == unyamld_character._json
+        try:
+            assert self.character.__dict__ == unyamld_character.__dict__
+        except AssertionError as e:
+            print set(self.character.__dict__).symmetric_difference(set(unyamld_character.__dict__))
+            raise e
 
         
     def test_assert_character_exists_return_None(self):
