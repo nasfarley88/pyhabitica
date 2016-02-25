@@ -19,7 +19,7 @@ class TestCharacter(unittest2.TestCase):
 
     def tearDown(self):
         """Tear down character."""
-        print self.character_to_restore
+        print(self.character_to_restore)
         self.character_to_restore.push()
 
     def test_push_character_return_None(self):
@@ -44,18 +44,18 @@ class TestCharacter(unittest2.TestCase):
         yaml_filename = "test_char.yaml"
         if os.path.exists(yaml_filename):
             os.remove(yaml_filename)
-        yaml.dump(self.character, open(yaml_filename, "wb"))
-        unyamld_character = yaml.load(open(yaml_filename, "rb"))
+        yaml.dump(self.character, open(yaml_filename, "w"))
+        unyamld_character = yaml.load(open(yaml_filename, "r"))
         os.remove(yaml_filename)
 
         assert self.character._json == unyamld_character._json
         try:
             assert self.character.__dict__ == unyamld_character.__dict__
         except AssertionError as e:
-            print set(self.character.__dict__).symmetric_difference(set(unyamld_character.__dict__))
+            print(set(self.character.__dict__).symmetric_difference(set(unyamld_character.__dict__)))
             raise e
 
-        
+
     def test_assert_character_exists_return_None(self):
         assert self.character
 
@@ -79,7 +79,7 @@ class TestCharacter(unittest2.TestCase):
         tasks = self.character.get_specific_tasks(text__contains="e")
         assert len(tasks) != 0,\
                              """If this test has failed, it's possible that there are no tasks with the letter 'e' on Habitica ... or the function really is broken."""
-        
+
     @staticmethod
     def dummy_generator(tasks):
         for task in tasks:
@@ -117,7 +117,7 @@ class TestCharacter(unittest2.TestCase):
     # TODO figure out how to test this safely
     # def test_buy_equipment(self):
     #     assert False,\
-    #         "Not sure how to test this one yet, can't create items." 
+    #         "Not sure how to test this one yet, can't create items."
 
     # TODO figure out how to test selling item
 

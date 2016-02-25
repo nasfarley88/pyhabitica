@@ -1,6 +1,6 @@
-from habitica_object import HabiticaObject
-from task import Task
-from character import Character
+from .habitica_object import HabiticaObject
+from .task import Task
+from .character import Character
 
 # TODO build test for this and make it return True or False
 def server_is_up():
@@ -15,6 +15,3 @@ class Content(HabiticaObject):
     """
     def __init__(self, uuid, apikey):
         super(Content, self).__init__(uuid, apikey, endpoint="/content")
-    
-
-

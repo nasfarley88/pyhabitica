@@ -1,4 +1,4 @@
-from habitica_object import HabiticaObject
+from .habitica_object import HabiticaObject
 import attrdict
 
 def _create_task_on_server(uuid, apikey):
@@ -23,7 +23,7 @@ class Task(HabiticaObject):
         # TODO consider moving all the AttrMap to HabiticaObject with
         # a condition in __getattr__ (might cause problems for
         # __setattr__ though
-        if type(id_or_json) == str or type(id_or_json) == unicode:
+        if type(id_or_json) == str:
             super(Task, self).__init__(
                 character.uuid,
                 character.apikey,

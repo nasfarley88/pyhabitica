@@ -1,8 +1,9 @@
 # Ignore temporary files
 *~
 
-# Ignore my config file
+# Ignore my config files
 config.py
+.python-version
 
 # Ignore any pickle files
 *.p

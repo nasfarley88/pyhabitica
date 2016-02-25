@@ -1,3 +1,6 @@
+# User provided config file
+import config
+
 import requests
 import attrdict
 
@@ -20,7 +23,7 @@ class HabiticaObject(object):
 
         self.__dict__["uuid"] = uuid
         self.__dict__["apikey"] = apikey
-        self.__dict__["habitica_api"] = "https://habitica.com/api/v2"
+        self.__dict__["habitica_api"] = config.HABITICA_URL+"/api/v2"
 
         if json:
             self.__dict__["_json"] = attrdict.AttrMap(json)
@@ -38,7 +41,6 @@ class HabiticaObject(object):
         # pickle doesn't freak out.
         super(HabiticaObject, self).__setattr__("__dict__", d)
 
-            
     def _put_or_except(self, endpoint, json=None):
         """Return json from PUT request or raise an exception."""
         if json:
@@ -62,7 +64,7 @@ class HabiticaObject(object):
         try:
             r.raise_for_status()
         except Exception as e:
-            print r
+            print(r)
             raise(e)
         return attrdict_or_list(r.json())
 
@@ -121,7 +123,7 @@ class HabiticaObject(object):
             # recall the function
             self.__dict__["_json"] = attrdict.AttrMap()
             return getattr(self, name)
-            
+
 
     def __setattr__(self, name, value):
         if name in self.__dict__["_json"].keys():

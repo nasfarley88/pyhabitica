@@ -1,6 +1,6 @@
-from habitica_object import HabiticaObject
-from task import Task
-from item import InventoryItem
+from .habitica_object import HabiticaObject
+from .task import Task
+from .item import InventoryItem
 import attrdict
 
 # TODO consider having all HabiticaObjects do the _json and __getattr__ and __setattr__ thing
@@ -27,7 +27,6 @@ class Character(HabiticaObject):
         to_remove = [
             "_id",
             "__v",
-            "migration",
             "pushDevices",
             "rewards",
             "todos",
