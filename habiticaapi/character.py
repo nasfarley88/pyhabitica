@@ -9,15 +9,19 @@ class Character(HabiticaObject):
         super(Character, self).__init__(uuid, apikey)
 
         # Cache for tasks and user info
-        # 
+        #
         # This leads to duplication, but keeping them separate is easier at this stage in development.
         self.__dict__["_tasks"] = []
-        self._json = attrdict.AttrMap(self._get_or_except("/user"))
+        self.__dict__["json"] = attrdict.AttrMap(self._get_or_except("/user"))
 
     # overriding __setattr__ to prevent users modifying values without functions
     # def __setattr__(self, name, value):
     #     assert False, "__setattr__ has been disabled for the Character class. If you *really* need to edit a member variable, use self.__dict__[name] = value."
-        
+
+
+    def __str__(self):
+        return "Character('"+str(self.json.profile.name)+"')"
+
 
     def push(self):
         """WARNING: not yet tested properly!
@@ -54,7 +58,7 @@ class Character(HabiticaObject):
             "id",
             ]
 
-        to_submit = self._json
+        to_submit = self.json
 
         for key in to_remove:
             to_submit.pop(key)
@@ -81,7 +85,7 @@ class Character(HabiticaObject):
 
     def get_specific_tasks(self, tasks_iterable=None, use_cached=False, **kwargs):
         """Get tasks matching certain critera with keyword__contains.
-        
+
         Get all tasks matching criteria given in kwargs. If no extra
         kwargs are given, return nothing. (If you want to return
         everything, use get_all_tasks())
@@ -105,7 +109,7 @@ class Character(HabiticaObject):
             tasks = tasks_iterable(self.get_all_tasks(use_cached=True))
         else:
             assert False, "tasks_iterable must be None or a callable."
-            
+
         return_list = []
 
         # TODO use regex to catch the _tmp_key and make sure
@@ -115,7 +119,7 @@ class Character(HabiticaObject):
             for k, v in kwargs.items():
                 if "__contains" in k:
                     _tmp_key = k.replace("__contains", "")
-                    if v in getattr(task, _tmp_key):
+                    if v in getattr(task.json, _tmp_key):
                         return_list.append(task)
                 elif "__re" in k:
                     assert False, "Sorry, not implemented yet!"
@@ -129,13 +133,13 @@ class Character(HabiticaObject):
                 if task.completed == False:
                     yield task
             except AttributeError:
-                if task.type == 'habit':
+                if task.json.type == 'habit':
                     yield task
 
     def get_current_tasks(self):
         """Get all currently running tasks (not including rewards)."""
         return self.get_all_tasks(self._current_tasks_generator)
-                            
+
     # TODO complete
     # def create_habit(self, **kwargs):
     #     template_task = {
@@ -155,7 +159,7 @@ class Character(HabiticaObject):
 
     #     for i in kwargs:
     #         template
-    
+
 
     def get_task(self, id):
         # When a Task recieves only an ID, it fetches the task from online.
@@ -194,7 +198,7 @@ class Character(HabiticaObject):
     def buy_item_with_mystery(self, type, key):
         return self._post_or_except(
             "/user/inventory/mystery/{}/{}".format(
-                item.type, item.key))
+                item.json.type, item.key))
 
     def feed_pet(self, pet, food):
         return self._post_or_except(

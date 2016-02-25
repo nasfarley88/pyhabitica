@@ -35,7 +35,7 @@ class TestCharacter(unittest2.TestCase):
         unpickled_character = pickle.load(open(pickle_filename, "rb"))
         os.remove(pickle_filename)
 
-        assert self.character._json == unpickled_character._json
+        assert self.character.json == unpickled_character.json
         assert self.character.__dict__ == unpickled_character.__dict__
 
     def test_yaml_character_return_None(self):
@@ -48,7 +48,7 @@ class TestCharacter(unittest2.TestCase):
         unyamld_character = yaml.load(open(yaml_filename, "r"))
         os.remove(yaml_filename)
 
-        assert self.character._json == unyamld_character._json
+        assert self.character.json == unyamld_character.json
         try:
             assert self.character.__dict__ == unyamld_character.__dict__
         except AssertionError as e:
@@ -108,7 +108,7 @@ class TestCharacter(unittest2.TestCase):
 
     def test_get_task_from_get_all_tasks_return_None(self):
         tasks = self.character.get_all_tasks()
-        task = self.character.get_task(tasks[0].id)
+        task = self.character.get_task(tasks[0].json.id)
 
     def test_get_items_can_buy(self):
         items = self.character.get_items_can_buy()

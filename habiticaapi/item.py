@@ -19,5 +19,5 @@ class Creature(attrdict.AttrMap):
         >>> item = Creature(item_json_dictionary)"""
         super(Creature, self).__init__(*args, **kwargs)
 
-    # def __repr__(self):
-    #     return "Creature"+"("+str(attrdict.AttrMap(self.__dict__))+")"
+    def __str__(self):
+        return "Creature"+"("+str(attrdict.AttrMap(self.__dict__))+")"

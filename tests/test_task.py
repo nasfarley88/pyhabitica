@@ -19,7 +19,8 @@ class TestTask(unittest2.TestCase):
             type__contains = "habit"
             )[0]
 
-        # This *must* be an independent copy
+        # This *must* be an independent copy otherwise when it is changed, and
+        # I push it back, it will be the changed character
         self.character_to_restore = copy.deepcopy(self.character)
 
     def tearDown(self):

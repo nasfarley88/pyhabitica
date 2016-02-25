@@ -25,37 +25,34 @@ class Task(HabiticaObject):
         # __setattr__ though
         if type(id_or_json) == str:
             super(Task, self).__init__(
-                character.uuid,
-                character.apikey,
+                character._uuid,
+                character._apikey,
                 endpoint="/user/tasks/{}".format(id_or_json))
-            # self._json = get_or_except("/user/tasks/{}".format(id), character.uuid, character.apikey)
         else:
             # TODO revise this logic, it's not as clear as I'd like
             try:
                 _tmp_json = dict(id_or_json)
                 super(Task, self).__init__(
-                    character.uuid,
-                    character.apikey,
+                    character._uuid,
+                    character._apikey,
                     json=_tmp_json)
             except ValueError as e:
-                assert False, "id_or_json must be str, unicode or dict-like object."
-            
+                assert False, "id_or_json must be str or dict-like object."
 
-    def __repr__(self):
+
+    def __str__(self):
         return "Task('"+self.text+"')"
-
-    # TODO repr and str methods
 
     def pull(self):
         """Update the task from the server, squashing any local changes."""
-        self._json = self._get_or_except("/user/tasks/{}".format(self.id))
+        self.__dict__["json"] = self._get_or_except("/user/tasks/{}".format(self.json.id))
 
     def push(self):
         """Push updates to the task (via the HTTP PUT method)."""
-            
+
         return self._put_or_except(
-            "/user/tasks/{}".format(self.id),
-            self._json
+            "/user/tasks/{}".format(self.json.id),
+            self.json
             )
 
     # def modify_habit(self, id, direction):
@@ -72,15 +69,15 @@ class Task(HabiticaObject):
         """
         assert direction == "up" or direction == "down",\
             "direction must be \"up\" or \"down\""
-        
+
         # Returns information on XP gained, items etc.
         result = self._post_or_except(
-            "/user/tasks/{}/{}".format(self.id, direction),
-            self._json
+            "/user/tasks/{}/{}".format(self.json.id, direction),
+            self.json
             )
 
         return result
-                            
+
 
     # TODO think about better naming scheme
     def up(self):
